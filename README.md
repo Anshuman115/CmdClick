@@ -138,7 +138,7 @@ Zero navigation failures across both repos.
 Search for **CmdClick** in the Extensions panel, or install via:
 
 ```bash
-code --install-extension Anshuman115.cmd-click
+code --install-extension Anshuman115.cmdclick
 ```
 
 ### From VSIX (local build)

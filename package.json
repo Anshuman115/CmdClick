@@ -1,5 +1,5 @@
 {
-  "name": "cmd-click",
+  "name": "cmdclick",
   "displayName": "CmdClick",
   "description": "MoleculerJS code navigation — Cmd+Click on service action strings and reference counts",
   "version": "0.1.0",
