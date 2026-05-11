@@ -134,13 +134,13 @@ Zero navigation failures across both repos.
 Search for **CmdClick** in the Extensions panel, or install via:
 
 ```bash
-code --install-extension anshuman115.cmdclick
+code --install-extension Anshuman115.cmdclick
 ```
 
 ### From VSIX (local build)
 
 ```bash
-git clone https://github.com/anshuman115/Codewire.git
+git clone https://github.com/Anshuman115/CmdClick.git
 cd CmdClick
 make install
 ```
