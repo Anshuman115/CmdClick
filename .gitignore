@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.vsix
+*.txt
+.DS_Store
+test-report.*
+test_cases.json
+CMDCLICK.md
