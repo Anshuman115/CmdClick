@@ -1,0 +1,73 @@
+{
+  "name": "cmdclick",
+  "displayName": "CmdClick",
+  "description": "MoleculerJS code navigation — Cmd+Click on service action strings and reference counts",
+  "version": "0.1.0",
+  "publisher": "anshuman115",
+  "license": "Apache-2.0",
+  "author": "Anshuman Tripathy",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anshuman115/CmdClick"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "moleculer",
+    "moleculerjs",
+    "microservices",
+    "code-navigation",
+    "go-to-definition"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "CmdClick",
+      "properties": {
+        "cmdclick.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable CmdClick language server"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "cmdclick.showReferences",
+        "title": "CmdClick: Show References"
+      }
+    ],
+    "configurationDefaults": {
+      "editor.gotoLocation.multipleDefinitions": "goto"
+    }
+  },
+  "dependencies": {
+    "acorn": "^8.16.0",
+    "acorn-walk": "^8.3.5",
+    "chokidar": "^5.0.0",
+    "mnemonist": "^0.40.4",
+    "vscode-languageclient": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.2",
+    "@vscode/vsce": "^2.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run src",
+    "dev": "tsx src/main.ts",
+    "package": "npm run build && vsce package --allow-missing-repository"
+  }
+}
