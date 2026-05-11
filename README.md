@@ -1,8 +1,12 @@
 # CmdClick
 
-**Code Intelligence for MoleculerJS** — Go-to-Definition, Find Usages, and CodeLens for MoleculerJS microservice architectures.
+![CmdClick Banner](banner.png)
+
+**Code Intelligence for MoleculerJS** — Go-to-Definition, CodeLens usage counts, and mixin-aware navigation for MoleculerJS microservice architectures.
 
 VS Code treats service calls like `ctx.call("v1.orders.create")` as plain strings. CmdClick understands them as navigable symbols — Cmd+Click to jump to the action definition, see usage counts above every method, and trace calls across services and mixins.
+
+> **⚠️ Alpha Release** — This is an early version. Bugs are expected. If something doesn't navigate correctly, please [open an issue](https://github.com/Anshuman115/CmdClick/issues) — it helps a lot.
 
 ## Features
 
