@@ -1,6 +1,6 @@
 {
-  "name": "cmdclick",
-  "displayName": "CmdClick",
+  "name": "cmd-click",
+  "displayName": "Cmd-Click",
   "description": "MoleculerJS code navigation — Cmd+Click on service action strings and reference counts",
   "version": "0.1.0",
   "publisher": "Anshuman115",
@@ -23,7 +23,9 @@
     "moleculerjs",
     "microservices",
     "code-navigation",
-    "go-to-definition"
+    "go-to-definition",
+    "cmdclick",
+    "cmd-click"
   ],
   "activationEvents": [
     "onLanguage:javascript"
