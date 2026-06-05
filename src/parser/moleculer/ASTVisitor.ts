@@ -35,12 +35,18 @@ export function parseJavaScript(content: string): AstNode {
       allowHashBang: true,
     }) as unknown as AstNode
   } catch {
-    return parse(content, {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      locations: true,
-      allowHashBang: true,
-    }) as unknown as AstNode
+    try {
+      return parse(content, {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        locations: true,
+        allowHashBang: true,
+      }) as unknown as AstNode
+    } catch {
+      // File uses syntax acorn cannot parse — return an empty stub so the
+      // server never crashes on unparseable files.
+      return { type: 'Program', start: 0, end: 0, body: [], loc: null }
+    }
   }
 }
 

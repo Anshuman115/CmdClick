@@ -39,6 +39,11 @@ export class Handlers {
     }
   }
 
+  handleDidClose(uri: string): void {
+    // Remove cached content when VS Code closes a file to prevent unbounded memory growth
+    this.documents.delete(uri)
+  }
+
   handleDidSave(params: DidSaveTextDocumentParams): void {
     const filePath = uriToPath(params.textDocument.uri)
     try {
@@ -98,16 +103,24 @@ export class Handlers {
     )
   }
 
-  handleCodeLens(id: unknown, params: CodeLensParams): void {
+  handleCodeLens(id: unknown, params: CodeLensParams, scanComplete: boolean): void {
+    if (!scanComplete) {
+      this.transport.writeResponse(id, [])
+      return
+    }
     const filePath = uriToPath(params.textDocument.uri)
     const fileId = this.index.stringPool().intern(filePath)
     const lenses: CodeLens[] = []
+
+    // Build a name→symbols lookup once for this call to avoid O(N²) scan
+    const nameToSymbols = this.buildNameIndex()
 
     for (const symbol of this.index.symbolsByFile(fileId)) {
       if (symbol.sourceFileId !== 0 && symbol.sourceFileId !== symbol.fileId) {
         continue
       }
-      const refs = this.findAllReferencesForSymbol(symbol).map((location) => this.toLspLocation(location))
+      const refs = this.findAllReferencesForSymbolFast(symbol, nameToSymbols)
+        .map((location) => this.toLspLocation(location))
       if (refs.length === 0) {
         continue
       }
@@ -129,9 +142,23 @@ export class Handlers {
   }
 
   findAllReferencesForSymbol(symbol: Symbol): IndexLocation[] {
-    const locations = [...this.index.findReferences(symbol.fullName)]
+    return this.findAllReferencesForSymbolFast(symbol, this.buildNameIndex())
+  }
+
+  private buildNameIndex(): Map<string, Symbol[]> {
+    const nameToSymbols = new Map<string, Symbol[]>()
     for (const candidate of this.index.prefixSearch('')) {
-      if (candidate.name === symbol.name && candidate.fullName !== symbol.fullName) {
+      const list = nameToSymbols.get(candidate.name) ?? []
+      list.push(candidate)
+      nameToSymbols.set(candidate.name, list)
+    }
+    return nameToSymbols
+  }
+
+  private findAllReferencesForSymbolFast(symbol: Symbol, nameToSymbols: Map<string, Symbol[]>): IndexLocation[] {
+    const locations = [...this.index.findReferences(symbol.fullName)]
+    for (const candidate of nameToSymbols.get(symbol.name) ?? []) {
+      if (candidate.fullName !== symbol.fullName) {
         locations.push(...this.index.findReferences(candidate.fullName))
       }
     }
@@ -234,9 +261,6 @@ export class Handlers {
     const symbols = this.index.symbolsByFile(fileId)
     if (symbols.length > 0) {
       return symbols[0]?.namespace ?? ''
-    }
-    if (filePath.endsWith('.mixin.js') || filePath.endsWith('.mixins.js')) {
-      return this.scanner.findNamespaceForFile(filePath)
     }
     return this.scanner.findNamespaceForFile(filePath)
   }

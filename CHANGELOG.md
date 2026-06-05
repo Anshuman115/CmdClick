@@ -2,6 +2,29 @@
 
 All notable changes to **CmdClick** will be documented in this file.
 
+## [0.2.0] - 2026-05-26
+
+### Fixed
+
+- **Server crash loop on unparseable files** — files using syntax acorn cannot parse (newer JS proposals, duplicate `let` declarations, pipeline operators, etc.) now return an empty index result instead of crashing the LSP process and triggering infinite restart loops
+- **Duplicate reference entries** — removed duplicate `referencesProvider` registration conflict; each usage now appears exactly once in the locations panel
+- **Cmd+hover popup** — Cmd+hover no longer triggers the usages popup; only real Cmd+Click (which changes the editor selection) shows results
+- **First-click reliability** — definition and reference requests arriving before workspace scan finishes are now queued and replayed automatically on scan completion; the first Cmd+Click always works without retries
+- **Memory leak on file close** — `textDocument/didClose` is now handled; cached file content is freed when VS Code closes a document
+
+### Added
+
+- **Cmd+Click on definition shows usages** — clicking a method or action name (at its definition site) now shows the same "Locations (N)" popup as the CodeLens button
+- **Navigation breadcrumb** — when navigating into a method via CodeLens, the caller's position is tracked; the usages popup pre-selects (scrolls to) that call site on the next usages lookup
+- **Watcher error resilience** — chokidar OS-level errors (`EMFILE`, `EACCES`, etc.) are now caught as non-fatal and logged, preventing server crashes in large monorepos
+- **CodeLens scan guard** — CodeLens requests during initial indexing return empty immediately instead of showing partial/stale data
+
+### Performance
+
+- **O(N²) → O(N) CodeLens generation** — `findAllReferencesForSymbol` previously scanned all 23 000+ symbols for every method in a file; now builds a name→symbols map once per CodeLens request, making CodeLens ~20× faster on large codebases
+
+---
+
 ## [0.1.0] - 2026-05-11
 
 ### Added
