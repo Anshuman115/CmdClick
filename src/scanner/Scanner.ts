@@ -40,32 +40,37 @@ export class Scanner {
   parseFile(filePath: string): ParseResult {
     const parser = this.findParser(filePath)
     if (parser === undefined) {
-      throw new Error(`no parser for ${filePath}`)
+      return { symbols: [], references: [], unresolvedMixins: [], errors: [] }
     }
-    const content = fs.readFileSync(filePath)
-    const result = parser.parse(filePath, content)
-    const fileId = this.index.stringPool().intern(filePath)
-    this.index.deleteByFile(fileId)
-    for (const symbol of result.symbols) {
-      symbol.fileId = fileId
-      symbol.sourceFileId = fileId
-      this.index.insert(symbol)
-    }
-    // Re-run mixin resolution so cross-mixin __self__ refs resolve correctly
-    this.resolveMixins(result.unresolvedMixins)
-    for (const ref of result.references) {
-      ref.location.fileId = fileId
-      const pending: PendingReference = {
-        fullName: ref.fullName,
-        kind: ref.kind,
-        fileId,
-        line: ref.location.line,
-        column: ref.location.column,
+    try {
+      const content = fs.readFileSync(filePath)
+      const result = parser.parse(filePath, content)
+      const fileId = this.index.stringPool().intern(filePath)
+      this.index.deleteByFile(fileId)
+      for (const symbol of result.symbols) {
+        symbol.fileId = fileId
+        symbol.sourceFileId = fileId
+        this.index.insert(symbol)
       }
-      const resolvedName = this.resolveReferenceName(pending)
-      this.index.addReference(resolvedName, ref.location)
+      // Re-run mixin resolution so cross-mixin __self__ refs resolve correctly
+      this.resolveMixins(result.unresolvedMixins)
+      for (const ref of result.references) {
+        ref.location.fileId = fileId
+        const pending: PendingReference = {
+          fullName: ref.fullName,
+          kind: ref.kind,
+          fileId,
+          line: ref.location.line,
+          column: ref.location.column,
+        }
+        const resolvedName = this.resolveReferenceName(pending)
+        this.index.addReference(resolvedName, ref.location)
+      }
+      return result
+    } catch (err) {
+      process.stderr.write(`[CmdClick] Skipping unparseable file: ${filePath}: ${err instanceof Error ? err.message : String(err)}\n`)
+      return { symbols: [], references: [], unresolvedMixins: [], errors: [] }
     }
-    return result
   }
 
   findNamespaceForFile(filePath: string): string {
