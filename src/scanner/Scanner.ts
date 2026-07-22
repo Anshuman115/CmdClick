@@ -33,8 +33,21 @@ export class Scanner {
 
     for (const ref of refs) {
       const fullName = this.resolveReferenceName(ref)
-      this.index.addReference(fullName, { fileId: ref.fileId, line: ref.line, column: ref.column })
+      const err = this.index.addReference(fullName, { fileId: ref.fileId, line: ref.line, column: ref.column })
+      if (err !== undefined) {
+        this.logDroppedReference(ref, fullName)
+      }
     }
+  }
+
+  private logDroppedReference(ref: PendingReference, resolvedFullName: string): void {
+    const file = this.index.stringPool().get(ref.fileId)
+    if (ref.fullName.startsWith('__self__') && this.findNamespaceForFile(file).length === 0) {
+      return
+    }
+    process.stderr.write(
+      `[CmdClick] dropped reference: raw="${ref.fullName}" resolved="${resolvedFullName}" kind=${ref.kind} at ${file}:${ref.line}:${ref.column}\n`,
+    )
   }
 
   parseFile(filePath: string): ParseResult {
@@ -64,7 +77,10 @@ export class Scanner {
           column: ref.location.column,
         }
         const resolvedName = this.resolveReferenceName(pending)
-        this.index.addReference(resolvedName, ref.location)
+        const err = this.index.addReference(resolvedName, ref.location)
+        if (err !== undefined) {
+          this.logDroppedReference(pending, resolvedName)
+        }
       }
       return result
     } catch (err) {
@@ -132,7 +148,8 @@ export class Scanner {
       const mixinFileId = this.index.stringPool().intern(mixinFilePath)
       for (const symbol of this.index.symbolsByFile(mixinFileId)) {
         const fullName = `${sourceNamespace}.${symbol.name}`
-        if (this.index.lookup(fullName) !== undefined) {
+        const existing = this.index.lookup(fullName)
+        if (existing !== undefined) {
           continue
         }
         this.index.insert({
@@ -156,10 +173,14 @@ export class Scanner {
     }
     // Event references: find the event symbol by name since events are stored as namespace.eventName
     if (ref.kind === ReferenceKind.Emit || ref.kind === ReferenceKind.Broadcast) {
-      for (const symbol of this.index.prefixSearch('')) {
+      const matches: string[] = []
+      for (const symbol of this.index.getAllSymbols()) {
         if (symbol.kind === SymbolKind.Event && symbol.name === ref.fullName) {
-          return symbol.fullName
+          matches.push(symbol.fullName)
         }
+      }
+      if (matches.length > 0) {
+        return matches[0] ?? ref.fullName
       }
     }
     return ref.fullName

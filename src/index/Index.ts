@@ -1,4 +1,3 @@
-import { TrieMap } from 'mnemonist'
 import { InvertedIndex } from './InvertedIndex'
 import { StringPool } from './StringPool'
 import type { IndexStats, Location, Symbol } from '../types/types'
@@ -7,8 +6,8 @@ export class Index {
   private readonly pool = new StringPool()
   private readonly symbols = new Map<string, Symbol>()
   private readonly byFile = new Map<number, string[]>()
-  private readonly radix = new TrieMap<string, Symbol>()
   private readonly refs = new InvertedIndex()
+  private nameIndexCache: Symbol[] | null = null
 
   stringPool(): StringPool {
     return this.pool
@@ -26,7 +25,7 @@ export class Index {
     symbol.id = id
     this.symbols.set(symbol.fullName, symbol)
     this.byFile.set(symbol.fileId, [...(this.byFile.get(symbol.fileId) ?? []), symbol.fullName])
-    this.radix.set(symbol.fullName, symbol)
+    this.nameIndexCache = null
     return undefined
   }
 
@@ -37,7 +36,6 @@ export class Index {
     }
 
     this.symbols.delete(fullName)
-    this.radix.delete(fullName)
     this.refs.deleteAll(symbol.id)
 
     const names = this.byFile.get(symbol.fileId) ?? []
@@ -50,6 +48,7 @@ export class Index {
   }
 
   deleteByFile(fileId: number): void {
+    this.nameIndexCache = null
     const names = this.byFile.get(fileId) ?? []
     for (const fullName of names) {
       const symbol = this.symbols.get(fullName)
@@ -57,7 +56,6 @@ export class Index {
         this.refs.deleteAll(symbol.id)
       }
       this.symbols.delete(fullName)
-      this.radix.delete(fullName)
     }
     this.byFile.delete(fileId)
     // Also remove references FROM this file (stored under other symbols)
@@ -69,7 +67,15 @@ export class Index {
   }
 
   prefixSearch(prefix: string): Symbol[] {
-    return this.radix.find(prefix).map((entry) => entry[1])
+    return Array.from(this.symbols.values()).filter((symbol) => symbol.fullName.startsWith(prefix))
+  }
+
+  getAllSymbols(): Symbol[] {
+    if (this.nameIndexCache !== null) {
+      return this.nameIndexCache
+    }
+    this.nameIndexCache = Array.from(this.symbols.values())
+    return this.nameIndexCache
   }
 
   addReference(fullName: string, location: Location): Error | undefined {
