@@ -142,7 +142,7 @@ export class Server {
         }
         const stats = this.index.stats()
         let eventCount = 0
-        for (const s of this.index.prefixSearch('')) {
+        for (const s of this.index.getAllSymbols()) {
           if (s.kind === 'event') eventCount++
         }
         process.stderr.write(`[CmdClick] Scan complete in ${scanMs}ms\n`)

@@ -2,7 +2,7 @@
   "name": "cmd-click",
   "displayName": "Cmd-Click",
   "description": "MoleculerJS code navigation — Cmd+Click on service action strings and reference counts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "Anshuman115",
   "license": "Apache-2.0",
   "author": "Anshuman Tripathy",
@@ -60,7 +60,6 @@
     "acorn": "^8.16.0",
     "acorn-walk": "^8.3.5",
     "chokidar": "^5.0.0",
-    "mnemonist": "^0.40.4",
     "vscode-languageclient": "^8.1.0"
   },
   "devDependencies": {

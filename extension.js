@@ -7,6 +7,7 @@ const vscode = require('vscode')
 const { LanguageClient, TransportKind } = require('vscode-languageclient/node')
 const path = require('path')
 const fs = require('fs')
+const { wasRecentClick } = require('./dist/click-detection')
 
 /** @type {LanguageClient} */
 let client
@@ -20,9 +21,11 @@ let statusBar
 // When the user Cmd+Clicks, VS Code fires onDidChangeTextEditorSelection
 // BEFORE sending textDocument/definition. Hover never changes selection.
 // We capture the timestamp of the last selection change to tell them apart.
+// See src/click-detection.ts for the (tested) decision logic.
 // ---------------------------------------------------------------------------
 
-let lastSelectionChangeMs = 0
+/** @type {number | null} */
+let lastSelectionChangeMs = null
 
 vscode.window.onDidChangeTextEditorSelection(() => {
   lastSelectionChangeMs = Date.now()
@@ -86,7 +89,7 @@ function activate(context) {
       // -----------------------------------------------------------------------
       provideDefinition: async (document, position, token, next) => {
         // Capture click state BEFORE the async server round-trip
-        const wasClick = Date.now() - lastSelectionChangeMs < 300
+        const wasClick = wasRecentClick(lastSelectionChangeMs, Date.now())
 
         const result = await next(document, position, token)
 
