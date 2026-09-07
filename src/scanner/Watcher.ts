@@ -27,6 +27,12 @@ export class Watcher {
         const fileId = this.index.stringPool().intern(filePath)
         this.index.deleteByFile(fileId)
       })
+      // Log chokidar errors as non-fatal so the server never crashes on OS-level
+      // file descriptor issues (EMFILE, EACCES, etc.) in large monorepos.
+      ;(watcher as unknown as { on(event: 'error', listener: (err: unknown) => void): void })
+        .on('error', (err) => {
+          process.stderr.write(`[CmdClick] Watcher error (non-fatal): ${err instanceof Error ? err.message : String(err)}\n`)
+        })
       this.watcher = watcher
     })
   }

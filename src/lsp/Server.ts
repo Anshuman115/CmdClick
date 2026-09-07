@@ -27,6 +27,7 @@ export class Server {
   private readonly handlers: Handlers
   private rootPath = process.cwd()
   private scanComplete = false
+  private readonly pendingRequests: RequestMessage[] = []
 
   constructor(readable: Readable, writable: Writable) {
     this.index = new Index()
@@ -76,14 +77,29 @@ export class Server {
       case 'textDocument/didSave':
         this.handlers.handleDidSave(asDidSaveParams(message.params))
         return
-      case 'textDocument/definition':
-        this.handlers.handleDefinition(message.id, asTextDocumentPositionParams(message.params), this.scanComplete)
+      case 'textDocument/didClose': {
+        const record = isRecord(message.params) && isRecord((message.params as Record<string, unknown>).textDocument)
+          ? (message.params as Record<string, unknown>)
+          : {}
+        const tdClose = isRecord(record.textDocument) ? record.textDocument : {}
+        const closeUri = typeof tdClose.uri === 'string' ? tdClose.uri : ''
+        if (closeUri.length > 0) this.handlers.handleDidClose(closeUri)
         return
+      }
+      case 'textDocument/definition':
       case 'textDocument/references':
-        this.handlers.handleReferences(message.id, asReferenceParams(message.params), this.scanComplete)
+        if (!this.scanComplete) {
+          this.pendingRequests.push(message)
+        } else {
+          if (message.method === 'textDocument/definition') {
+            this.handlers.handleDefinition(message.id, asTextDocumentPositionParams(message.params), true)
+          } else {
+            this.handlers.handleReferences(message.id, asReferenceParams(message.params), true)
+          }
+        }
         return
       case 'textDocument/codeLens':
-        this.handlers.handleCodeLens(message.id, asCodeLensParams(message.params))
+        this.handlers.handleCodeLens(message.id, asCodeLensParams(message.params), this.scanComplete)
         return
 
       case 'textDocument/hover':
@@ -106,7 +122,6 @@ export class Server {
         definitionProvider: true,
         referencesProvider: true,
         hoverProvider: false,
-
         codeLensProvider: { resolveProvider: false },
       },
     }
@@ -122,6 +137,9 @@ export class Server {
         const scanMs = Date.now() - startMs
         this.watcher.watch(this.rootPath)
         this.scanComplete = true
+        for (const pending of this.pendingRequests.splice(0)) {
+          this.dispatch(pending)
+        }
         const stats = this.index.stats()
         let eventCount = 0
         for (const s of this.index.prefixSearch('')) {

@@ -34,9 +34,8 @@ export interface InitializeParams {
 export interface ServerCapabilities {
   textDocumentSync: number
   definitionProvider: boolean
-  referencesProvider: boolean
+  referencesProvider?: boolean
   hoverProvider: boolean
-
   codeLensProvider: { resolveProvider: boolean }
 }
 
