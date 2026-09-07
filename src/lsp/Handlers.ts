@@ -147,7 +147,7 @@ export class Handlers {
 
   private buildNameIndex(): Map<string, Symbol[]> {
     const nameToSymbols = new Map<string, Symbol[]>()
-    for (const candidate of this.index.prefixSearch('')) {
+    for (const candidate of this.index.getAllSymbols()) {
       const list = nameToSymbols.get(candidate.name) ?? []
       list.push(candidate)
       nameToSymbols.set(candidate.name, list)
@@ -167,7 +167,7 @@ export class Handlers {
 
   findBestSymbolByName(methodName: string): Symbol | undefined {
     let best: Symbol | undefined
-    for (const candidate of this.index.prefixSearch('')) {
+    for (const candidate of this.index.getAllSymbols()) {
       if (candidate.name !== methodName) {
         continue
       }
@@ -183,7 +183,7 @@ export class Handlers {
 
   private findClassSymbolByName(methodName: string): Symbol | undefined {
     const pool = this.index.stringPool()
-    for (const candidate of this.index.prefixSearch('')) {
+    for (const candidate of this.index.getAllSymbols()) {
       if (candidate.name !== methodName) continue
       const filePath = pool.get(candidate.sourceFileId || candidate.fileId)
       if (!filePath.endsWith('.service.js') && !filePath.endsWith('.mixin.js') && !filePath.endsWith('.mixins.js')) {
@@ -195,7 +195,7 @@ export class Handlers {
 
 
   private findEventByRawString(rawString: string): Symbol | undefined {
-    for (const candidate of this.index.prefixSearch('')) {
+    for (const candidate of this.index.getAllSymbols()) {
       if (candidate.kind === SymbolKind.Event && candidate.name === rawString) {
         return candidate
       }
@@ -271,7 +271,7 @@ export class Handlers {
       return null
     }
     // Try exact namespace match first
-    for (const symbol of this.index.prefixSearch('')) {
+    for (const symbol of this.index.getAllSymbols()) {
       if (symbol.namespace === namespace) {
         return {
           uri: pathToUri(this.index.stringPool().get(symbol.fileId)),
