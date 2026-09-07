@@ -10,7 +10,7 @@ const parser = new MoleculerParser()
 
 async function main(args: string[]): Promise<void> {
   if (args[0] === '--version') {
-    process.stdout.write('CmdClick JS 1.0.0\n')
+    process.stdout.write('CmdClick JS 0.1.0\n')
     return
   }
   if (args[0] === '--debug-parse') {
