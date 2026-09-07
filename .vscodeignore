@@ -1,7 +1,10 @@
 .git/**
 .gitignore
 .github/**
+.agents/**
 CMDCLICK.md
+CLAUDE.md
+AGENTS.md
 docs/**
 test/**
 Makefile
@@ -15,5 +18,7 @@ package-lock.json
 banner.png
 .DS_Store
 run-tests.js
+auto-test.js
+visual-test.js
 test_cases.json
 test-report.*

@@ -9,11 +9,14 @@ test:
 test-verbose:
 	npx vitest run src --reporter=verbose
 
+VERSION := $(shell node -p "require('./package.json').version")
+NAME    := $(shell node -p "require('./package.json').name")
+
 package: build
 	npx vsce package --allow-missing-repository
 
 install: package
-	code --install-extension cmdclick-0.1.0.vsix
+	code --install-extension $(NAME)-$(VERSION).vsix
 
 debug-parse: build
 	@echo "Usage: make debug-parse FILE=path/to/file.service.js"
